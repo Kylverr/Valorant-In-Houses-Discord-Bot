@@ -7,8 +7,21 @@ const { REST, Routes } = discord;
 const commands = [
     {
         name: 'addi',
-        description: 'BETA'
+        description: 'BETA',
+    },
+    {
+	name: 'register',
+	description: 'Register your Discord account with our database.',
+    },
+    {
+	name: 'join',
+	description: 'Join the current queue.',
+    },
+    {
+	name: 'leave',
+	description: 'Leave the current queue.',
     }
+
 ];
 
 const rest = new REST({version: '10'}).setToken(process.env.TOKEN);

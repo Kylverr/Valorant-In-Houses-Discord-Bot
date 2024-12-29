@@ -22,22 +22,17 @@ client.on('interactionCreate', (interaction) => {
 
     if(interaction.commandName === 'addi')
         interaction.reply('BETA IS HERE');
-});
-
-client.on('messageCreate', (message) => {
-    if (message.author.bot)
-        return;
-    if (message.content === '!queue') {
-        addUserToQueue(message.author);
-        message.reply(`${message.author} added to the queue.`);
+    else if(interaction.commandName === 'register') {
+	createUser(interaction.user);
+        interaction.reply(`${interaction.user} created. You may join the queue now.`);
     }
-    else if(message.content === '!leave') {
-        removeUserFromQueue(message.author);
-        message.reply(`${message.author} removed from the queue.`)
+    else if(interaction.commandName === 'join') {
+        addUserToQueue(interaction.user);
+        interaction.reply(`${interaction.user} has joined the queue.`);
     }
-    else if(message.content === '!join') {
-        createUser(message.author);
-        message.reply(`${message.author} created. You may join the queue now.`)
+    else if(interaction.commandName === 'leave') {
+        removeUserFromQueue(interaction.user);
+        interaction.reply(`${interaction.user} has left the queue.`);
     }
 });
 
@@ -55,6 +50,7 @@ function createUser(user) {
 }
 
 function addUserToQueue(user) {
+    console.log(`Added ${user}`);
 }
 
 function removeUserFromQueue(user) {
