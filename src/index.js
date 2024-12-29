@@ -17,42 +17,51 @@ client.on('ready', (c) => {
     console.log(`${c.user.tag} is online.`)
 });
 
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate', async (interaction) => {
     if(!interaction.isChatInputCommand()) return;
+    try { 
+        await interaction.deferReply();
 
-    if(interaction.commandName === 'addi')
-        interaction.reply('BETA IS HERE');
-    else if(interaction.commandName === 'register') {
-	createUser(interaction.user);
-        interaction.reply(`${interaction.user} created. You may join the queue now.`);
+        if(interaction.commandName === 'addi')
+            await interaction.followUp('BETA IS HERE');
+        else if(interaction.commandName === 'register') {
+            await createUser(interaction.user);
+            await interaction.followUp(`${interaction.user} created. You may join the queue now.`);
+        }
+        else if(interaction.commandName === 'join') {
+            await addUserToQueue(interaction.user);
+            await interaction.followUp(`${interaction.user} has joined the queue.`);
+        }
+        else if(interaction.commandName === 'leave') {
+            await removeUserFromQueue(interaction.user);
+            await interaction.followUp(`${interaction.user} has left the queue.`);
+        }
     }
-    else if(interaction.commandName === 'join') {
-        addUserToQueue(interaction.user);
-        interaction.reply(`${interaction.user} has joined the queue.`);
-    }
-    else if(interaction.commandName === 'leave') {
-        removeUserFromQueue(interaction.user);
-        interaction.reply(`${interaction.user} has left the queue.`);
+    catch (err) {
+        console.error(`Error handling interaction: ${err}`);
+        if (!interaction.replied) {
+            await interaction.followUp(`Error replying to interaction.`);
+        }
     }
 });
 
 client.login(process.env.TOKEN);
 
-function createUser(user) {
-    const res = checkUserExistence(user);
-    if (res) {
+async function createUser(user) {
+    const res = await checkUserExistence(user.id);
+    if (res.length === 0) {
         console.log("account added");
-        addUser(user, 500, 0);
+        await addUser(user.id, 500, 0);
     }
     else {
         console.log("account already added");
     }
 }
 
-function addUserToQueue(user) {
+async function addUserToQueue(user) {
     console.log(`Added ${user}`);
 }
 
-function removeUserFromQueue(user) {
+async function removeUserFromQueue(user) {
     console.log(`Removed ${user}`);
 }
