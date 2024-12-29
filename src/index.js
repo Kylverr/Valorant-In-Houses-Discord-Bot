@@ -58,10 +58,3 @@ async function createUser(user) {
     }
 }
 
-async function addUserToQueue(user) {
-    console.log(`Added ${user}`);
-}
-
-async function removeUserFromQueue(user) {
-    console.log(`Removed ${user}`);
-}
