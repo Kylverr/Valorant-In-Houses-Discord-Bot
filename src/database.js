@@ -23,14 +23,28 @@ async function checkConnection() {
 
 checkConnection();
 
-export async function addUser(user, mmr, games) {
+export async function addPlayer(user, mmr, games) {
     const [rows] = await pool.query(`INSERT INTO Players(disc_tag, mmr, total_games) VALUES(?, ?, ?);`, [user, mmr, games]);
     console.log(`Added ${user}`);
     return rows;
 }
 
-export async function checkUserExistence(user) {
-    const [rows] = await pool.query(`SELECT * FROM Players WHERE disc_tag = ? ;`, [user]);
-    console.log(rows);
+export async function getPlayer(player) {
+    const [rows] = await pool.query(`SELECT * FROM Players WHERE disc_tag = ? ;`, [player]);
     return rows;
+}
+
+export async function getPlayersMMR(players) {
+    const m = new Map();
+    players.forEach(async (player) => {
+        const playerMMR = await getPlayerMMR(player);
+        m.put(player, playerMMR);
+    });
+    console.log(`Retrieving MMR of players`);
+    return m;
+}
+
+async function getPlayerMMR(player) {
+    const [playerInfo] = await getPlayer(player);
+    return playerInfo.mmr;
 }

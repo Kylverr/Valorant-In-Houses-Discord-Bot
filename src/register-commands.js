@@ -20,6 +20,10 @@ const commands = [
     {
 	name: 'leave',
 	description: 'Leave the current queue.',
+    },
+    {
+	name: 'generate',
+	description: 'Generate teams for a match.',
     }
 
 ];
