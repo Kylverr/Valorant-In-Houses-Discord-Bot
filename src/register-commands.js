@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import discord from 'discord.js';
 dotenv.config();
-const { REST, Routes } = discord;
+const { REST, Routes, ApplicationCommandOptionType } = discord;
 
 
 const commands = [
@@ -24,7 +24,36 @@ const commands = [
     {
 	name: 'generate',
 	description: 'Generate teams for a match.',
+    },
+    {
+	name: 'report',
+	description: 'Report the result of your game.',
+        options:
+        [
+            {
+                name: 'result',
+                description: 'The result of your game. Report \"W\" if you won, or report \"L\" if you lost.',
+                type: ApplicationCommandOptionType.String,
+                choices:
+                [
+                    {
+                        name: 'W',
+                        value: 'W',
+                    },
+                    {
+                        name: 'L',
+                        value: 'L',
+                    }
+                ],
+                required: true,
+            }
+        ]
+    },
+    {
+	name: 'steal',
+	description: 'Steal Mikka\'s money.',
     }
+
 
 ];
 
