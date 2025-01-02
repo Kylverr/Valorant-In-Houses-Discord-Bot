@@ -17,6 +17,7 @@ client.on('ready', (c) => {
         q.add(user); 
     } 
 }); 
+
 client.on('interactionCreate', async (interaction) => { 
     if(!interaction.isChatInputCommand()) return; 
     try { 
@@ -26,15 +27,22 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.followUp(`BETA IS HERE`); 
         } 
         else if(interaction.commandName === 'register') {
-            await createUser(interaction.user.id);
-            await interaction.followUp(`${interaction.user} created. You may join the queue now.`);
+            const res = await createUser(interaction.user.id);
+            await interaction.followUp(determineResponse(`${interaction.user} created. You may join the queue now.`,
+            `${interaction.user} has already been registered.`,
+            res));
         }
         else if(interaction.commandName === 'join') {
-            const res = await addUserToQueue(interaction.user.id);
-            if (res === 0)
-                await interaction.followUp(`${interaction.user} has joined the queue.`);
-            else
-                await interaction.followUp(`${interaction.user} has not been registered before.`);
+            const res = 0; 
+            try {
+                res = await addUserToQueue(interaction.user.id);
+                await interaction.followUp(determineResponse(`${interaction.user} has joined the queue.`,
+                `${interaction.user} has not been registered before.`,
+                res));
+           }
+            catch (e) {
+                await interaction.followUp(`${interaction.user} has already joined the queue.`);
+            }
         }
         else if(interaction.commandName === 'leave') {
             q.remove(interaction.user.id);
@@ -59,7 +67,7 @@ client.on('interactionCreate', async (interaction) => {
         else if (interaction.commandName === 'report') {
             const result = await interaction.options.get('result').value;
             const newPlayersMMR = await reportResult(result, interaction.user.id);
-            await interaction.followUp(`Reported result: ${result}\nUpdate MMRS: ${JSON.stringify([...newPlayersMMR])}`);
+            await interaction.followUp(`Reported result: ${result}\nUpdate MMRS:\n${await playersToString(newPlayersMMR, interaction.client.users)}`);
         }
     }
     catch (err) {
@@ -77,14 +85,19 @@ client.on('interactionCreate', async (interaction) => {
 
 client.login(process.env.TOKEN);
 
+/**
+ * Creates a user within the database with the specified user id.
+ * @param user The user id to be registered within the database
+ * @return -1 if the user was already created, 0 if the operation was successful
+ */
 async function createUser(user) {
     const res = await getPlayer(user);
     if (res.length === 0) {
-        console.log("account added");
         await addPlayer(user, 500, 0);
+        return 0;
     }
     else {
-        console.log("account already added");
+        return -1;
     }
 }
 
@@ -107,8 +120,7 @@ async function addUserToQueue(user) {
         return -1;
     }
     else {
-        q.add(user);
-        return 0;
+        return q.add(user);
     }
 }
 
@@ -120,4 +132,25 @@ async function reportResult(result, reportingUser) {
     console.log(newPlayersWithMMR);
     await updatePlayerMMRSAndTotalGames(newPlayersWithMMR);
     return newPlayersWithMMR;
+}
+
+async function playersToString(playersWithMMR, users) {
+    let s = ``;
+    for(const [id, mmr] of playersWithMMR) {
+        const user = await users.fetch(id);
+        s += (`${user.toString()}: ${mmr}\n`);
+    }
+    return s;
+}
+
+/**
+ * Determines whether the successful message or failure message should be returned given the provided result.
+ * The provided result is assumed to be -1 if a failure, a success otherwise.
+ * @successfulResponse The successful message
+ * @failureResponse The failure message
+ * @res Result to determine which message is returned. It is assumed -1 is a failure, a success otherwise.
+ * @return The correct response according to the given result
+ */
+function determineResponse(successfulResponse, failureResponse, res) {
+    return res === -1 ? failureResponse : successfulResponse;
 }

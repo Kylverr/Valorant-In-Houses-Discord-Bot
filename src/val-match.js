@@ -61,14 +61,16 @@ class ValorantMatch {
         // calculate total sums of the MMR of both teams
         const winnersSum = winners.reduce((sum, id) => sum + playersWithMMR.get(id), 0);
         const losersSum = losers.reduce((sum, id) => sum + playersWithMMR.get(id), 0);
+        console.log(`Winners sum: ${winnersSum}\nLosers sum: ${losersSum}`);
         // calculate the difference between loser sum and winner sum
         const difference = (losersSum - winnersSum);
+        console.log(`Difference: ${difference}`);
         // shift the difference to be in the range [-upperThreshold, upperThreshold]
         const hundredRange = difference <= ValorantMatch.upperThreshold && difference >= -ValorantMatch.upperThreshold ? 
             difference >= 0 ? difference : -difference : ValorantMatch.upperThreshold;
         // shift the difference to be in the range [0, upperThreshold]
         console.log(`Hundred range: ${hundredRange}`);
-        const teamImbalanceCorrection = Math.floor(Math.sqrt(hundredRange)); 
+        const teamImbalanceCorrection = Math.floor(Math.sqrt(hundredRange - 1)); 
         const netGain = difference >= 0 ? teamImbalanceCorrection + 10 : 10 - teamImbalanceCorrection;
         console.log(`Net gain: ${netGain}`);
 

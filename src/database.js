@@ -116,6 +116,5 @@ export async function updatePlayerMMRSAndTotalGames(playersWithMMR) {
 
 async function updatePlayerMMR(id, mmr) {
     const [rows] = await pool.query(`UPDATE Players SET mmr = ?, total_games = total_games + 1 WHERE disc_tag = ?;`, [mmr, id]);
-    console.log(rows[0]);
     return rows[0];
 }

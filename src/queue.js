@@ -4,12 +4,10 @@ class Queue {
     }
 
     add(user) {
-        if (!this.queue.includes(user)) {
-            this.queue.push(user);
-            console.log(`Added ${user} to queue`);
+        if (this.queue.includes(user)) {
+            throw new Error(); 
         }
-        else 
-            console.log(`User already added to queue`);
+        this.queue.push(user);
     }
 
     remove(user) {
