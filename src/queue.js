@@ -1,5 +1,6 @@
 class Queue {
-    constructor() {
+    const MAX_SIZE = 10;
+    constructor(type) {
         this.queue = [];
     }
 
@@ -7,7 +8,12 @@ class Queue {
         if (this.queue.includes(user)) {
             throw new Error(); 
         }
+
         this.queue.push(user);
+        
+        if (this.queue.length == MAX_SIZE) {
+            return 1;
+        }
     }
 
     remove(user) {
@@ -24,7 +30,6 @@ class Queue {
         }
     }
     getSize() {
-        console.log(`Length is: ${this.queue.length}`);
         return this.queue.length;
     }
 
