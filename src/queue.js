@@ -1,5 +1,4 @@
 class Queue {
-    const MAX_SIZE = 10;
     constructor(type) {
         this.queue = [];
     }
@@ -10,10 +9,9 @@ class Queue {
         }
 
         this.queue.push(user);
+
+        return [... this.queue];
         
-        if (this.queue.length == MAX_SIZE) {
-            return 1;
-        }
     }
 
     remove(user) {

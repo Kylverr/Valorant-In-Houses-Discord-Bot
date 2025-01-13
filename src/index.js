@@ -36,9 +36,17 @@ client.on('interactionCreate', async (interaction) => {
             const res = 0; 
             try {
                 res = await addUserToQueue(interaction.user.id);
-                await interaction.followUp(determineResponse(`${interaction.user} has joined the queue.`,
+                let retStr = (determineResponse(`${interaction.user} has joined the queue.`,
                 `${interaction.user} has not been registered before.`,
                 res));
+
+                for(const id of res) {
+                    const user = await users.fetch(id);
+                    retStr += (`${user.toString()}\n`);
+                }
+
+                await interaction.followUp(retStr);
+
            }
             catch (e) {
                 await interaction.followUp(`${interaction.user} has already joined the queue.`);
