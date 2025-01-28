@@ -139,6 +139,7 @@ async function reportResult(result, reportingUser) {
     const newPlayersWithMMR = match.reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser);
     console.log(newPlayersWithMMR);
     await updatePlayerMMRSAndTotalGames(newPlayersWithMMR);
+    q.clearQueue();
     return newPlayersWithMMR;
 }
 

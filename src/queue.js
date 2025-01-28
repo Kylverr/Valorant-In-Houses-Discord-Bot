@@ -34,5 +34,12 @@ class Queue {
     getQueue() {
         return [... this.queue];
     }
+
+    /**
+     * Clears the queue
+     */
+    clearQueue() {
+        this.queue = [];
+    }
 }
 export default Queue
