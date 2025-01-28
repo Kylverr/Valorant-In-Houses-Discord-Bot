@@ -7,7 +7,7 @@ dotenv.config();
 const { Client, IntentsBitField, GuildMember } = discord;
 
 const q = new Queue();
-const tempUsers = ["412309566735384577", "877323881076101141", "505514753112670219", "670680767894126633"];
+const tempUsers = [process.env.KY_DISC_ID, process.env.MIKKA_DISC_ID, process.env.WARP_DISC_ID, process.env.GREGGO_DISC_ID];
 const match = new ValMatch(); 
 const client = new Client( { intents: [ IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent ] }); 
 client.on('ready', (c) => { 
@@ -49,7 +49,7 @@ client.on('interactionCreate', async (interaction) => {
 
            }
             catch (e) {
-                await interaction.followUp(`${interaction.user} has already joined the queue.`);
+                await interaction.followUp(`${interaction.user} has already joined the queue.\nError: ${e}`);
             }
         }
         else if(interaction.commandName === 'leave') {
