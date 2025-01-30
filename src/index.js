@@ -40,10 +40,7 @@ client.on('interactionCreate', async (interaction) => {
                 `${interaction.user} has not been registered before.`,
                 res));
 
-                for(const id of res) {
-                    const user = await interaction.client.users.fetch(id);
-                    retStr += (`${user.toString()}\n`);
-                }
+                retStr += await printQueue(res, interaction.client.users);
 
                 await interaction.followUp(retStr);
 
@@ -54,7 +51,10 @@ client.on('interactionCreate', async (interaction) => {
         }
         else if(interaction.commandName === 'leave') {
             q.remove(interaction.user.id);
-            await interaction.followUp(`${interaction.user} has left the queue.`);
+
+            let retStr = `${interaction.user} has left the queue.\n`
+            retStr += await printQueue(q.getQueue(), interaction.client.users);
+            await interaction.followUp(retStr);
         }
         else if (interaction.commandName === 'generate') {
             const { attacking, defending } = await generateTeams();  // Get the result from generateTeams
@@ -162,4 +162,13 @@ async function playersToString(playersWithMMR, users) {
  */
 function determineResponse(successfulResponse, failureResponse, res) {
     return res === -1 ? failureResponse : successfulResponse;
+}
+
+async function printQueue(queue, users) {
+    let retStr = `New Queue:\n`;
+    for(const id of queue) {
+        const user = await users.fetch(id);
+        retStr += (`${user.toString()}\n`);
+    }
+    return retStr;
 }
