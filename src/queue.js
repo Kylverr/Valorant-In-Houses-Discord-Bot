@@ -1,6 +1,8 @@
 class Queue {
-    constructor(type) {
+    constructor(max_size) {
         this.queue = [];
+        this.MAX_SIZE = max_size;
+        this.backup_queue = [];
     }
 
     add(user) {
@@ -8,24 +10,38 @@ class Queue {
             throw new Error(); 
         }
 
-        this.queue.push(user);
+        if(this.queue.length < this.MAX_SIZE) {
+            this.queue.push(user);
+        }
+        else {
+            this.backup_queue.push(user);
+        }
+
+        console.log(`New Queue: ${this.queue}`);
 
         return [... this.queue];
         
     }
 
     remove(user) {
-        console.log(`Current queue: ${this.queue}`);
-        console.log(`Finding: ${user}`);
-        const index = this.queue.indexOf(user);
+        let index = this.queue.indexOf(user);
         if (index > -1) {
             this.queue.splice(index, 1);
-            console.log(`Removed ${user}`);
-            console.log(`New size: ${this.queue.length}`);
+            // since someone left the general queue, add the first person in the backup queue to the general queue
+            if(this.backup_queue.length != 0) {
+                this.queue.push(this.backup_queue[0]);
+                this.backup_queue.splice(0, 1);
+            }
+        }
+        index = this.backup_queue.indexOf(user);
+        if (index > -1) {
+            this.backup_queue.splice(index, 1);
         }
         else {
             console.log(`User already removed`);
         }
+
+        console.log(`New Queue: ${this.queue}`);
     }
     getSize() {
         return this.queue.length;
@@ -36,10 +52,19 @@ class Queue {
     }
 
     /**
-     * Clears the queue
+     * Clears the queue and moves the appropriate number of items in the backup queue to the general queue.
      */
-    clearQueue() {
+    clear() {
         this.queue = [];
+
+        console.log(`Queue cleared`);
+
+        for(let i = 0; i < this.MAX_SIZE && this.backup_queue.length != 0; i++) {
+            this.queue.push(this.backup_queue[0]);
+            this.backup_queue.splice(0, 1);
+        }
+
+        console.log(`New Queue: ${this.queue}`);
     }
 }
 export default Queue

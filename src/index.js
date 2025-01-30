@@ -6,7 +6,7 @@ import ValMatch from './val-match.js'
 dotenv.config();
 const { Client, IntentsBitField, GuildMember } = discord;
 
-const q = new Queue();
+const q = new Queue(3);
 const tempUsers = [process.env.KY_DISC_ID, process.env.MIKKA_DISC_ID, process.env.WARP_DISC_ID, process.env.GREGGO_DISC_ID];
 const match = new ValMatch(); 
 const client = new Client( { intents: [ IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent ] }); 
@@ -33,15 +33,15 @@ client.on('interactionCreate', async (interaction) => {
             res));
         }
         else if(interaction.commandName === 'join') {
-            const res = 0; 
+            let res = 0; 
             try {
                 res = await addUserToQueue(interaction.user.id);
-                let retStr = (determineResponse(`${interaction.user} has joined the queue.`,
+                let retStr = (determineResponse(`${interaction.user} has joined the queue.\n`,
                 `${interaction.user} has not been registered before.`,
                 res));
 
                 for(const id of res) {
-                    const user = await users.fetch(id);
+                    const user = await interaction.client.users.fetch(id);
                     retStr += (`${user.toString()}\n`);
                 }
 
@@ -49,7 +49,7 @@ client.on('interactionCreate', async (interaction) => {
 
            }
             catch (e) {
-                await interaction.followUp(`${interaction.user} has already joined the queue.\nError: ${e}`);
+                await interaction.followUp(`${interaction.user} has already joined the queue.\nError: ${e.stack}`);
             }
         }
         else if(interaction.commandName === 'leave') {
@@ -139,7 +139,7 @@ async function reportResult(result, reportingUser) {
     const newPlayersWithMMR = match.reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser);
     console.log(newPlayersWithMMR);
     await updatePlayerMMRSAndTotalGames(newPlayersWithMMR);
-    q.clearQueue();
+    q.clear();
     return newPlayersWithMMR;
 }
 
