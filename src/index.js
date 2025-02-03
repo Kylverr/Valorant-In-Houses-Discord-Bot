@@ -8,48 +8,47 @@ const { Client, IntentsBitField, GuildMember } = discord;
 
 const q = new Queue(3);
 const tempUsers = [process.env.KY_DISC_ID, process.env.MIKKA_DISC_ID, process.env.WARP_DISC_ID, process.env.GREGGO_DISC_ID];
-const match = new ValMatch(); 
-const client = new Client( { intents: [ IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent ] }); 
-client.on('ready', (c) => { 
-    console.log(`${c.user.tag} is online.`); 
-    for(const user of tempUsers) 
-    { 
-        q.add(user); 
-    } 
-}); 
+const match = new ValMatch();
+const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent] });
+client.on('ready', (c) => {
+    console.log(`${c.user.tag} is online.`);
+    for (const user of tempUsers) {
+        q.add(user);
+    }
+});
 
-client.on('interactionCreate', async (interaction) => { 
-    if(!interaction.isChatInputCommand()) return; 
-    try { 
-        await interaction.deferReply(); 
-        console.log(`interaction deferred`); 
-        if(interaction.commandName === 'addi') { 
-            await interaction.followUp(`BETA IS HERE`); 
-        } 
-        else if(interaction.commandName === 'register') {
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+    try {
+        await interaction.deferReply();
+        console.log(`interaction deferred`);
+        if (interaction.commandName === 'addi') {
+            await interaction.followUp(`BETA IS HERE`);
+        }
+        else if (interaction.commandName === 'register') {
             const res = await createUser(interaction.user.id);
             await interaction.followUp(determineResponse(`${interaction.user} created. You may join the queue now.`,
-            `${interaction.user} has already been registered.`,
-            res));
+                `${interaction.user} has already been registered.`,
+                res));
         }
-        else if(interaction.commandName === 'join') {
-            let res = 0; 
+        else if (interaction.commandName === 'join') {
+            let res = 0;
             try {
                 res = await addUserToQueue(interaction.user.id);
                 let retStr = (determineResponse(`${interaction.user} has joined the queue.\n`,
-                `${interaction.user} has not been registered before.`,
-                res));
+                    `${interaction.user} has not been registered before.`,
+                    res));
 
                 retStr += await printQueue(res, interaction.client.users);
 
                 await interaction.followUp(retStr);
 
-           }
+            }
             catch (e) {
                 await interaction.followUp(`${interaction.user} has already joined the queue.\nError: ${e.stack}`);
             }
         }
-        else if(interaction.commandName === 'leave') {
+        else if (interaction.commandName === 'leave') {
             q.remove(interaction.user.id);
 
             let retStr = `${interaction.user} has left the queue.\n`
@@ -61,19 +60,19 @@ client.on('interactionCreate', async (interaction) => {
             if (attacking.length === 0)
                 await interaction.followUp(`Not enough players`);
             else {
-                const attackingUsers = await Promise.all(attacking.map( (id) => interaction.client.users.fetch(id.toString()).then( (user) => user.toString())));
-                const defendingUsers = await Promise.all(defending.map( (id) => interaction.client.users.fetch(id.toString()).then( (user) => user.toString())));
-                
+                const attackingUsers = await Promise.all(attacking.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+                const defendingUsers = await Promise.all(defending.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+
                 await interaction.followUp(`Attackers: ${attackingUsers.join(", ")}\nDefenders: ${defendingUsers.join(", ")}`);
             }
-                
+
         }
         else if (interaction.commandName === 'steal') {
-            const mikkaUser = await interaction.client.users.fetch('877323881076101141').then( (user) => user.toString());
+            const mikkaUser = await interaction.client.users.fetch('877323881076101141').then((user) => user.toString());
             await interaction.followUp(`Hacking...\nComplete!\nSucessfully stole 1 million robux(s) from ${mikkaUser}`);
         }
         else if (interaction.commandName === 'report') {
-            const result = await interaction.options.get('result').value;
+            const result = interaction.options.get('result').value;
             const newPlayersMMR = await reportResult(result, interaction.user.id);
             await interaction.followUp(`Reported result: ${result}\nUpdate MMRS:\n${await playersToString(newPlayersMMR, interaction.client.users)}`);
         }
@@ -116,7 +115,7 @@ async function generateTeams() {
     const queueArr = q.getQueue();
     const players = await getPlayersMMR(queueArr);
     // sort players according to mmr
-    const sortedPlayers = new Map([... players.entries()].sort( (a, b) => a[1] - b[1]));
+    const sortedPlayers = new Map([...players.entries()].sort((a, b) => a[1] - b[1]));
     const { attacking, defending } = match.generateTeams(sortedPlayers);
     return { attacking, defending };
 }
@@ -145,7 +144,7 @@ async function reportResult(result, reportingUser) {
 
 async function playersToString(playersWithMMR, users) {
     let s = ``;
-    for(const [id, mmr] of playersWithMMR) {
+    for (const [id, mmr] of playersWithMMR) {
         const user = await users.fetch(id);
         s += (`${user.toString()}: ${mmr}\n`);
     }
@@ -166,7 +165,7 @@ function determineResponse(successfulResponse, failureResponse, res) {
 
 async function printQueue(queue, users) {
     let retStr = `New Queue:\n`;
-    for(const id of queue) {
+    for (const id of queue) {
         const user = await users.fetch(id);
         retStr += (`${user.toString()}\n`);
     }
