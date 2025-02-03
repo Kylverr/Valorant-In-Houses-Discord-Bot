@@ -142,6 +142,12 @@ async function reportResult(result, reportingUser) {
     return newPlayersWithMMR;
 }
 
+/**
+ * Converts a map of key user id in String form and value int MMR to a String.
+ * @param {Map} playersWithMMR - map with key String and value number
+ * @param {number} users list of discord users
+ * @returns String representation of players
+ */
 async function playersToString(playersWithMMR, users) {
     let s = ``;
     for (const [id, mmr] of playersWithMMR) {
