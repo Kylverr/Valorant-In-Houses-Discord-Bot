@@ -10,54 +10,78 @@ const commands = [
         description: 'BETA',
     },
     {
-	name: 'register',
-	description: 'Register your Discord account with our database.',
+        name: 'register',
+        description: 'Register your Discord account with our database.',
     },
     {
-	name: 'join',
-	description: 'Join the current queue.',
+        name: 'join',
+        description: 'Join the current queue.',
     },
     {
-	name: 'leave',
-	description: 'Leave the current queue.',
+        name: 'leave',
+        description: 'Leave the current queue.',
     },
     {
-	name: 'generate',
-	description: 'Generate teams for a match.',
+        name: 'generate',
+        description: 'Generate teams for a match.',
     },
     {
-	name: 'report',
-	description: 'Report the result of your game.',
+        name: 'report',
+        description: 'Report the result of your game.',
         options:
-        [
-            {
-                name: 'result',
-                description: 'The result of your game. Report \"W\" if you won, or report \"L\" if you lost.',
-                type: ApplicationCommandOptionType.String,
-                choices:
-                [
-                    {
-                        name: 'W',
-                        value: 'W',
-                    },
-                    {
-                        name: 'L',
-                        value: 'L',
-                    }
-                ],
-                required: true,
-            }
-        ]
+            [
+                {
+                    name: 'result',
+                    description: 'The result of your game. Report \"W\" if you won, or report \"L\" if you lost.',
+                    type: ApplicationCommandOptionType.String,
+                    choices:
+                        [
+                            {
+                                name: 'W',
+                                value: 'W',
+                            },
+                            {
+                                name: 'L',
+                                value: 'L',
+                            }
+                        ],
+                    required: true,
+                }
+            ]
     },
     {
-	name: 'steal',
-	description: 'Steal Mikka\'s money.',
+        name: 'start',
+        description: 'Start a queue for a specified game.',
+        options:
+            [
+                {
+                    name: 'game',
+                    description: 'The game you want to start a queue for. Choose \"RL\" for \"Rocket League\", or \"VAL\" for \"Valorant\".',
+                    type: ApplicationCommandOptionType.String,
+                    choices:
+                        [
+                            {
+                                name: 'RL',
+                                value: 'RL',
+                            },
+                            {
+                                name: 'VAL',
+                                value: 'VAL',
+                            }
+                        ],
+                    required: true,
+                }
+            ]
+    },
+    {
+        name: 'steal',
+        description: 'Steal Mikka\'s money.',
     }
 
 
 ];
 
-const rest = new REST({version: '10'}).setToken(process.env.TOKEN);
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 (async () => {
     try {

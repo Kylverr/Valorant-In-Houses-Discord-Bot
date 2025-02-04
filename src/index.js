@@ -7,6 +7,9 @@ dotenv.config();
 const { Client, IntentsBitField, GuildMember } = discord;
 
 const q = new Queue(3);
+
+const queues = new Map();
+
 const tempUsers = [process.env.KY_DISC_ID, process.env.MIKKA_DISC_ID, process.env.WARP_DISC_ID, process.env.GREGGO_DISC_ID];
 const match = new ValMatch();
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent] });
@@ -68,13 +71,17 @@ client.on('interactionCreate', async (interaction) => {
 
         }
         else if (interaction.commandName === 'steal') {
-            const mikkaUser = await interaction.client.users.fetch('877323881076101141').then((user) => user.toString());
+            const mikkaUser = await interaction.client.users.fetch(process.env.MIKKA_DISC_ID).then((user) => user.toString());
             await interaction.followUp(`Hacking...\nComplete!\nSucessfully stole 1 million robux(s) from ${mikkaUser}`);
         }
         else if (interaction.commandName === 'report') {
             const result = interaction.options.get('result').value;
             const newPlayersMMR = await reportResult(result, interaction.user.id);
             await interaction.followUp(`Reported result: ${result}\nUpdate MMRS:\n${await playersToString(newPlayersMMR, interaction.client.users)}`);
+        }
+        else if (interaction.commandName === 'start') {
+            const game = interaction.options.get('game').value;
+            await interaction.followUp(`Created a queue for a ${game} game.`);
         }
     }
     catch (err) {
