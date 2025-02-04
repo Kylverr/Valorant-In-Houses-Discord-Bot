@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import discord from 'discord.js'
-import { addPlayer, getPlayer, getPlayersMMR, getPlayersTotalGames, updatePlayerMMRSAndTotalGames } from './database.js'
+import { addPlayer, getPlayer, getPlayersValMMR, getPlayersValTotalGames, updatePlayersValMMRSAndValTotalGames } from './database.js'
 import Queue from './queue.js'
 import ValMatch from './val-match.js'
 dotenv.config();
@@ -113,7 +113,7 @@ async function generateTeams() {
         return { attacking: [], defending: [] }
     }
     const queueArr = q.getQueue();
-    const players = await getPlayersMMR(queueArr);
+    const players = await getPlayersValMMR(queueArr);
     // sort players according to mmr
     const sortedPlayers = new Map([...players.entries()].sort((a, b) => a[1] - b[1]));
     const { attacking, defending } = match.generateTeams(sortedPlayers);
@@ -133,11 +133,11 @@ async function addUserToQueue(user) {
 
 async function reportResult(result, reportingUser) {
     const queueArr = q.getQueue();
-    const playersWithMMR = await getPlayersMMR(queueArr);
-    const playersWithTotalGames = await getPlayersTotalGames(queueArr);
+    const playersWithMMR = await getPlayersValMMR(queueArr);
+    const playersWithTotalGames = await getPlayersValTotalGames(queueArr);
     const newPlayersWithMMR = match.reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser);
     console.log(newPlayersWithMMR);
-    await updatePlayerMMRSAndTotalGames(newPlayersWithMMR);
+    await updatePlayersValMMRSAndValTotalGames(newPlayersWithMMR);
     q.clear();
     return newPlayersWithMMR;
 }
