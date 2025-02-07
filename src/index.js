@@ -6,14 +6,16 @@ import ValMatch from './val-match.js'
 dotenv.config();
 const { Client, IntentsBitField, GuildMember } = discord;
 
+const queueOwners = new Map();
+const queueIDS = new Map();
 const q = new Queue(3);
-
-const queues = new Map();
 
 const tempUsers = [process.env.KY_DISC_ID, process.env.MIKKA_DISC_ID, process.env.WARP_DISC_ID, process.env.GREGGO_DISC_ID];
 const match = new ValMatch();
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent] });
 client.on('ready', (c) => {
+    queueOwners.set(process.env.KY_DISC_ID, q);
+    queueIDS.set(1, q);
     console.log(`${c.user.tag} is online.`);
     for (const user of tempUsers) {
         q.add(user);
@@ -35,6 +37,11 @@ client.on('interactionCreate', async (interaction) => {
                 res));
         }
         else if (interaction.commandName === 'join') {
+            const queueID = interaction.options.get('queueid').value;
+            if(!queueIDS.has(queueID)) {
+                interaction.followUp(`Queue with ID ${queueID} does not exist.`);
+                return;
+            }
             let res = 0;
             try {
                 res = await addUserToQueue(interaction.user.id);
@@ -59,7 +66,12 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.followUp(retStr);
         }
         else if (interaction.commandName === 'generate') {
-            const { attacking, defending } = await generateTeams();  // Get the result from generateTeams
+            if(!queueOwners.has(interaction.user.id)) {
+                const user = await interaction.client.users.fetch(interaction.user.id).then((user) => user.toString());
+                await interaction.followUp(`${user} has not started a queue yet.`);
+                return;
+            }
+            const { attacking, defending } = await generateTeams(interaction.user.id);  // Get the result from generateTeams
             if (attacking.length === 0)
                 await interaction.followUp(`Not enough players`);
             else {
@@ -80,6 +92,11 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.followUp(`Reported result: ${result}\nUpdate MMRS:\n${await playersToString(newPlayersMMR, interaction.client.users)}`);
         }
         else if (interaction.commandName === 'start') {
+            if(queueOwners.has(interaction.user.id)) {
+                const user = await interaction.client.users.fetch(interaction.user.id).then((user) => user.toString());
+                await interaction.followUp(`${user} has already started a queue.`); 
+                return;
+            }
             const game = interaction.options.get('game').value;
             await interaction.followUp(`Created a queue for a ${game} game.`);
         }
@@ -115,7 +132,8 @@ async function createUser(user) {
     }
 }
 
-async function generateTeams() {
+async function generateTeams(user) {
+    const q = queueOwners.get(user);
     if (q.getSize() < 2) {
         return { attacking: [], defending: [] }
     }

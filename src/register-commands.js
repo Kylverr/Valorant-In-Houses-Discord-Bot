@@ -16,6 +16,15 @@ const commands = [
     {
         name: 'join',
         description: 'Join the current queue.',
+        options:
+            [
+                {
+                    name: 'queueid',
+                    description: 'The ID of the queue you are looking to join.',
+                    type: ApplicationCommandOptionType.Integer,
+                    required: true
+                }
+            ]
     },
     {
         name: 'leave',
