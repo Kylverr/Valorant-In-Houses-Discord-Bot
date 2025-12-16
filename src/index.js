@@ -1,8 +1,8 @@
 import dotenv from 'dotenv'
 import discord from 'discord.js'
 import { addPlayer, getPlayer, getPlayersValMMR, getPlayersValTotalGames, updatePlayersValMMRSAndValTotalGames } from './database.js'
-import Queue from './queue.js'
-import ValMatch from './val-match.js'
+import Queue from './models/queue.js'
+import ValMatch from './models/val-match.js'
 dotenv.config();
 const { Client, IntentsBitField, GuildMember } = discord;
 
