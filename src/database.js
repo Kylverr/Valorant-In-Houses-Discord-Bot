@@ -16,7 +16,7 @@ const pool = mysql.createPool({
  */
 async function checkConnection() {
     try {
-        const [rows] = await pool.query(`SELECT disc_tag FROM Players;`);
+        const [rows] = await pool.query(`SELECT disc_tag FROM Player;`);
         console.log(`Connection succeeded. Number of current players: ${rows.length}\nPlayers: ${rows}`);
     }
     catch (err) {
@@ -27,13 +27,13 @@ async function checkConnection() {
 
 async function registerUsers(users, val_mmrs, rl_mmrs) {
     for (let i = 0; i < users.length; i++) {
-        const [rows] = await pool.query(`INSERT INTO Players(disc_tag, val_mmr, total_val_games, rl_mmr, total_rl_games) VALUES(?, ?, ?, ?, ?);`, [users[i], val_mmrs[i], 0, rl_mmrs[i], 0]);
+        const [rows] = await pool.query(`INSERT INTO Player(disc_tag, val_mmr, total_val_games, rl_mmr, total_rl_games) VALUES(?, ?, ?, ?, ?);`, [users[i], val_mmrs[i], 0, rl_mmrs[i], 0]);
         console.log(`registered: ${users[i]}, ${val_mmrs[i]}, ${rl_mmrs[i]}`);
     }
 }
 
 async function removeAllRegistrations() {
-    const [rows] = await pool.query(`DELETE FROM Players;`);
+    const [rows] = await pool.query(`DELETE FROM Player;`);
 }
 
 
@@ -52,13 +52,13 @@ await registerUsers(
 
 
 export async function addPlayer(user, val_mmr, val_games, rl_mmr, rl_games) {
-    const [rows] = await pool.query(`INSERT INTO Players(disc_tag, val_mmr, total_val_games, rl_mmr, total_rl_games) VALUES(?, ?, ?, ?, ?);`, [user, val_mmr, val_games, rl_mmr, rl_games]);
+    const [rows] = await pool.query(`INSERT INTO Player(disc_tag, val_mmr, total_val_games, rl_mmr, total_rl_games) VALUES(?, ?, ?, ?, ?);`, [user, val_mmr, val_games, rl_mmr, rl_games]);
     console.log(`Added ${user}`);
     return rows;
 }
 
 export async function getPlayer(player) {
-    const [rows] = await pool.query(`SELECT * FROM Players WHERE disc_tag = ? ;`, [player]);
+    const [rows] = await pool.query(`SELECT * FROM Player WHERE disc_tag = ? ;`, [player]);
     return rows;
 }
 
@@ -116,6 +116,6 @@ export async function updatePlayersValMMRSAndValTotalGames(playersWithMMR) {
 }
 
 async function updatePlayerValMMR(id, mmr) {
-    const [rows] = await pool.query(`UPDATE Players SET val_mmr = ?, total_val_games = total_val_games + 1 WHERE disc_tag = ?;`, [mmr, id]);
+    const [rows] = await pool.query(`UPDATE Player SET val_mmr = ?, total_val_games = total_val_games + 1 WHERE disc_tag = ?;`, [mmr, id]);
     return rows[0];
 }
