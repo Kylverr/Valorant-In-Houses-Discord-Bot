@@ -8,7 +8,7 @@ const { Client, IntentsBitField, GuildMember } = discord;
 
 const queueOwners = new Map();
 const queueIDS = new Map();
-const q = new Queue(3);
+const q = new Queue(4);
 
 const tempUsers = [process.env.KY_DISC_ID, process.env.MIKKA_DISC_ID, process.env.WARP_DISC_ID, process.env.GREGGO_DISC_ID];
 const match = new ValMatch();
