@@ -29,6 +29,15 @@ const commands = [
     {
         name: 'leave',
         description: 'Leave the current queue.',
+        options:
+            [
+                {
+                    name: 'queueid',
+                    description: 'The ID of the queue you are looking to leave.',
+                    type: ApplicationCommandOptionType.Integer,
+                    required: true
+                }
+            ]
     },
     {
         name: 'generate',
@@ -85,6 +94,10 @@ const commands = [
     {
         name: 'steal',
         description: 'Steal Mikka\'s money.',
+    },
+    {
+        name: 'queues',
+        description: `List all the current queues.`
     }
 
 

@@ -1,70 +1,73 @@
 class Queue {
-    constructor(max_size) {
-        this.queue = [];
-        this.MAX_SIZE = max_size;
-        this.backup_queue = [];
+    constructor({ id, ownerId, game, maxSize }) {
+        this.id = id;
+        this.ownerId = ownerId;
+        this.game = game;
+        this.MAX_SIZE = maxSize;
+        this.players = [];
+        this.backupQueue = [];
     }
 
     add(user) {
-        if (this.queue.includes(user)) {
+        if (this.players.includes(user)) {
             throw new Error(); 
         }
 
-        if(this.queue.length < this.MAX_SIZE) {
-            this.queue.push(user);
+        if(this.players.length < this.MAX_SIZE) {
+            this.players.push(user);
         }
         else {
-            this.backup_queue.push(user);
+            this.backupQueue.push(user);
         }
 
-        console.log(`New Queue: ${this.queue}`);
+        console.log(`New Queue: ${this.players}`);
 
-        return [... this.queue];
+        return [... this.players];
         
     }
 
     remove(user) {
-        let index = this.queue.indexOf(user);
+        let index = this.players.indexOf(user);
         if (index > -1) {
-            this.queue.splice(index, 1);
+            this.players.splice(index, 1);
             // since someone left the general queue, add the first person in the backup queue to the general queue
-            if(this.backup_queue.length != 0) {
-                this.queue.push(this.backup_queue[0]);
-                this.backup_queue.splice(0, 1);
+            if(this.backupQueue.length != 0) {
+                this.players.push(this.backupQueue[0]);
+                this.backupQueue.splice(0, 1);
             }
         }
-        index = this.backup_queue.indexOf(user);
+        index = this.backupQueue.indexOf(user);
         if (index > -1) {
-            this.backup_queue.splice(index, 1);
+            this.backupQueue.splice(index, 1);
         }
         else {
             console.log(`User already removed`);
         }
 
-        console.log(`New Queue: ${this.queue}`);
+        console.log(`New Queue: ${this.players}`);
     }
     getSize() {
-        return this.queue.length;
+        return this.players.length;
     }
 
     getQueue() {
-        return [... this.queue];
+        return [... this.players];
     }
 
     /**
      * Clears the queue and moves the appropriate number of items in the backup queue to the general queue.
      */
     clear() {
-        this.queue = [];
+        this.players = [];
 
         console.log(`Queue cleared`);
 
-        for(let i = 0; i < this.MAX_SIZE && this.backup_queue.length != 0; i++) {
-            this.queue.push(this.backup_queue[0]);
-            this.backup_queue.splice(0, 1);
+        for(let i = 0; i < this.MAX_SIZE && this.backupQueue.length != 0; i++) {
+            this.players.push(this.backupQueue[0]);
+            this.backupQueue.splice(0, 1);
         }
 
-        console.log(`New Queue: ${this.queue}`);
+        console.log(`New Queue: ${this.players}`);
     }
 }
 export default Queue
