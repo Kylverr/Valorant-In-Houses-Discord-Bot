@@ -10,8 +10,8 @@ const commands = [
         description: 'BETA',
     },
     {
-        name: 'register',
-        description: 'Register your Discord account with our database.',
+        name: 'generate',
+        description: 'Generate teams for a match.',
     },
     {
         name: 'join',
@@ -40,8 +40,36 @@ const commands = [
             ]
     },
     {
-        name: 'generate',
-        description: 'Generate teams for a match.',
+        name: 'mmr',
+        description: 'Get your current MMR.',
+        options:
+            [
+                {
+                    name: 'game',
+                    description: 'The game you want to get your MMR for. Choose \"RL\" for \"Rocket League\", or \"VAL\" for \"Valorant\".',
+                    type: ApplicationCommandOptionType.String,
+                    choices:
+                        [
+                            {
+                                name: 'RL',
+                                value: 'RL',
+                            },
+                            {
+                                name: 'VAL',
+                                value: 'VAL',
+                            }
+                        ],
+                    required: true,
+                }
+            ]
+    },
+    {
+        name: 'queues',
+        description: `List all the current queues.`
+    },
+    {
+        name: 'register',
+        description: 'Register your Discord account with our database.',
     },
     {
         name: 'report',
@@ -95,10 +123,6 @@ const commands = [
         name: 'steal',
         description: 'Steal Mikka\'s money.',
     },
-    {
-        name: 'queues',
-        description: `List all the current queues.`
-    }
 
 
 ];

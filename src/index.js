@@ -32,10 +32,22 @@ client.on('interactionCreate', async (interaction) => {
         if (interaction.commandName === 'addi') {
             await interaction.followUp(`BETA IS HERE`);
         }
-        else if (interaction.commandName === 'register') {
-            const created = await createUser(interaction.user.id);
-            await interaction.followUp(created ? `${interaction.user} created. You may join the queue now.` :
-                `${interaction.user} has already been registered.`);
+        else if (interaction.commandName === 'generate') {
+            if(!queuesByOwner.has(interaction.user.id)) {
+                const user = await interaction.client.users.fetch(interaction.user.id).then((user) => user.toString());
+                await interaction.followUp(`${user} has not started a queue yet.`);
+                return;
+            }
+            const { attacking, defending } = await generateTeams(interaction.user.id);  // Get the result from generateTeams
+            if (attacking.length === 0)
+                await interaction.followUp(`Not enough players`);
+            else {
+                const attackingUsers = await Promise.all(attacking.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+                const defendingUsers = await Promise.all(defending.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+
+                await interaction.followUp(`Attackers: ${attackingUsers.join(", ")}\nDefenders: ${defendingUsers.join(", ")}`);
+            }
+
         }
         else if (interaction.commandName === 'join') {
             const queueID = interaction.options.get('queueid').value;
@@ -73,22 +85,16 @@ client.on('interactionCreate', async (interaction) => {
             retStr += await printQueue(q, interaction.client.users);
             await interaction.followUp(retStr);
         }
-        else if (interaction.commandName === 'generate') {
-            if(!queuesByOwner.has(interaction.user.id)) {
-                const user = await interaction.client.users.fetch(interaction.user.id).then((user) => user.toString());
-                await interaction.followUp(`${user} has not started a queue yet.`);
+        else if (interaction.commandName === 'mmr') {
+            const userID = await interaction.user.id;
+            const player = await getPlayer(userID);
+            const game = interaction.options.get('game').value;
+            const userString = await interaction.client.users.fetch(userID).then((user) => user.toString());
+            if(player.length === 0) {
+                await interaction.followUp(`${userString} has not been registered before.`);
                 return;
             }
-            const { attacking, defending } = await generateTeams(interaction.user.id);  // Get the result from generateTeams
-            if (attacking.length === 0)
-                await interaction.followUp(`Not enough players`);
-            else {
-                const attackingUsers = await Promise.all(attacking.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-                const defendingUsers = await Promise.all(defending.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-
-                await interaction.followUp(`Attackers: ${attackingUsers.join(", ")}\nDefenders: ${defendingUsers.join(", ")}`);
-            }
-
+            await interaction.followUp(game === 'VAL' ? `Valorant MMR for ${userString}: ${player[0].val_mmr}` : `Rocket League MMR for ${userString}: ${player[0].rl_mmr}`);
         }
         else if (interaction.commandName === 'queues'){
             let retStr = `Queues:\n\n`;
@@ -97,9 +103,10 @@ client.on('interactionCreate', async (interaction) => {
             }
             await interaction.followUp(retStr);
         }
-        else if (interaction.commandName === 'steal') {
-            const mikkaUser = await interaction.client.users.fetch(process.env.MIKKA_DISC_ID).then((user) => user.toString());
-            await interaction.followUp(`Hacking...\nComplete!\nSucessfully stole 1 million robux(s) from ${mikkaUser}`);
+        else if (interaction.commandName === 'register') {
+            const created = await createUser(interaction.user.id);
+            await interaction.followUp(created ? `${interaction.user} created. You may join the queue now.` :
+                `${interaction.user} has already been registered.`);
         }
         else if (interaction.commandName === 'report') {
             const result = interaction.options.get('result').value;
@@ -114,6 +121,10 @@ client.on('interactionCreate', async (interaction) => {
             }
             const game = interaction.options.get('game').value;
             await interaction.followUp(`Created a queue for a ${game} game.`);
+        }
+        else if (interaction.commandName === 'steal') {
+            const mikkaUser = await interaction.client.users.fetch(process.env.MIKKA_DISC_ID).then((user) => user.toString());
+            await interaction.followUp(`Hacking...\nComplete!\nSucessfully stole 1 million robux(s) from ${mikkaUser}`);
         }
     }
     catch (err) {
