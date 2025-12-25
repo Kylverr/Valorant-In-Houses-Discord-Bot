@@ -1,9 +1,12 @@
 class ValorantMatch {
-    constructor() {
+    constructor(matchID, gameLeader) {
+        this.matchID = matchID;
+        this.gameLeader = gameLeader;
+
         this.attackingIDS = [];
         this.defendingIDS = [];
 
-        this.inProgress = false;
+        this.inProgress = true;
     }
 
     static lowerThreshold = 10;
