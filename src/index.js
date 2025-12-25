@@ -206,7 +206,7 @@ async function addUserToQueue(queue, user) {
 }
 
 async function reportResult(match, result, reportingUser) {
-    const playerIDs = match.attackingIDS.concat(match.defendingIDS);
+    const playerIDs = match.getTeam('attacking').concat(match.getTeam('defending'));
     const playersWithMMR = await getPlayersValMMR(playerIDs);
     const playersWithTotalGames = await getPlayersValTotalGames(playerIDs);
     const newPlayersWithMMR = match.reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser);
