@@ -19,9 +19,20 @@ const commands = [
         options:
             [
                 {
-                    name: 'queueid',
-                    description: 'The ID of the queue you are looking to join.',
-                    type: ApplicationCommandOptionType.Integer,
+                    name: 'game',
+                    description: 'The game you are joining the queue for. Choose \"RL\" for \"Rocket League\", or \"VAL\" for \"Valorant\".',
+                    type: ApplicationCommandOptionType.String,
+                    choices:
+                        [
+                            {
+                                name: 'RL',
+                                value: 'RL',
+                            },
+                            {
+                                name: 'VAL',
+                                value: 'VAL',
+                            }
+                        ],
                     required: true
                 }
             ]
@@ -32,9 +43,20 @@ const commands = [
         options:
             [
                 {
-                    name: 'queueid',
-                    description: 'The ID of the queue you are looking to leave.',
-                    type: ApplicationCommandOptionType.Integer,
+                    name: 'game',
+                    description: 'The game you are leaving the queue for. Choose \"RL\" for \"Rocket League\", or \"VAL\" for \"Valorant\".',
+                    type: ApplicationCommandOptionType.String,
+                    choices:
+                        [
+                            {
+                                name: 'RL',
+                                value: 'RL',
+                            },
+                            {
+                                name: 'VAL',
+                                value: 'VAL',
+                            }
+                        ],
                     required: true
                 }
             ]

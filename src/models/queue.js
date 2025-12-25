@@ -1,7 +1,5 @@
 class Queue {
-    constructor({ id, ownerId, game, maxSize }) {
-        this.id = id;
-        this.ownerId = ownerId;
+    constructor({ game, maxSize }) {
         this.game = game;
         this.MAX_SIZE = maxSize;
         this.players = [];

@@ -6,33 +6,19 @@ import ValMatch from './models/val-match.js'
 dotenv.config();
 const { Client, IntentsBitField, GuildMember } = discord;
 
-let nextQueueID = 1;
-const queues = new Map();
-const queuesByOwner = new Map();
+const queues = {
+    VAL: new Queue({ game: 'VAL', maxSize: 10 }),
+    RL: new Queue({ game: 'RL', maxSize: 8 })
+};
 
 const tempUsers = [process.env.KY_DISC_ID, process.env.MIKKA_DISC_ID, process.env.WARP_DISC_ID, process.env.GREGGO_DISC_ID];
 
 let nextMatchID = 1;
-const matches = new Map();
-const matchesByOwner = new Map();
+const matchesByOwner = new Map(); // ownerId -> Match
+
 
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent] });
-client.on('ready', (c) => {
-    const q = new Queue({id: nextQueueID, game: "Valorant", ownerId: process.env.KY_DISC_ID, maxSize: 10});
-    queues.set(nextQueueID, q);
-    nextQueueID++;
-    queuesByOwner.set(process.env.KY_DISC_ID, q);
 
-    const match = new ValMatch(nextMatchID, process.env.KY_DISC_ID);
-    matches.set(nextMatchID, match);
-    matchesByOwner.set(process.env.KY_DISC_ID, match);
-    nextMatchID++;
-
-    console.log(`${c.user.tag} is online.`);
-    for (const user of tempUsers) {
-        q.add(user);
-    }
-});
 
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
@@ -43,57 +29,48 @@ client.on('interactionCreate', async (interaction) => {
             await interaction.followUp(`BETA IS HERE`);
         }
         else if (interaction.commandName === 'generate') {
-            if(!queuesByOwner.has(interaction.user.id)) {
-                const user = await interaction.client.users.fetch(interaction.user.id).then((user) => user.toString());
-                await interaction.followUp(`${user} has not started a queue yet.`);
+            const game = interaction.options.get('game').value;
+            const match = await generateMatch(game, interaction.user.id);
+
+            if (!match) {
+                await interaction.followUp("Not enough players");
                 return;
             }
-            const { attacking, defending } = await generateTeams(interaction.user.id);  // Get the result from generateTeams
-            if (attacking.length === 0)
-                await interaction.followUp(`Not enough players`);
-            else {
-                const attackingUsers = await Promise.all(attacking.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-                const defendingUsers = await Promise.all(defending.map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+
+            if (game === 'VAL') {
+                const attackingUsers = await Promise.all(match.getTeam('attacking').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+                const defendingUsers = await Promise.all(match.getTeam('defending').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
 
                 await interaction.followUp(`Attackers: ${attackingUsers.join(", ")}\nDefenders: ${defendingUsers.join(", ")}`);
+            }
+            else if (game === 'RL') {
+                const blueUsers = await Promise.all(match.getTeam('blue').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+                const orangeUsers = await Promise.all(match.getTeam('orange').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+
+                await interaction.followUp(`Blue Team: ${blueUsers.join(", ")}\nOrange Team: ${orangeUsers.join(", ")}`);
             }
 
         }
         else if (interaction.commandName === 'join') {
-            const queueID = interaction.options.get('queueid').value;
-            if(!queues.has(queueID)) {
-                interaction.followUp(`Queue with ID ${queueID} does not exist.`);
-                return;
-            }
-            let res = 0;
-            const q = queues.get(queueID);
-            try {
-                res = await addUserToQueue(q, interaction.user.id);
-                let retStr = (determineResponse(`${interaction.user} has joined the queue.\n`,
-                    `${interaction.user} has not been registered before.`,
-                    res));
+            const game = interaction.options.get('game').value;
+            const queue = queues[game];
 
-                retStr += await printQueue(q, interaction.client.users);
+            await addUserToQueue(queue, interaction.user.id);
+            await interaction.followUp(
+                `${interaction.user} joined the ${game} queue\n` +
+                await printQueue(queue, interaction.client.users)
+            );
 
-                await interaction.followUp(retStr);
-
-            }
-            catch (e) {
-                await interaction.followUp(`${interaction.user} has already joined the queue.\nError: ${e.stack}`);
-            }
         }
         else if (interaction.commandName === 'leave') {
-            const queueID = interaction.options.get('queueid').value;
-            if(!queues.has(queueID)) {
-                await interaction.followUp(`Queue with ID ${queueID} does not exist.`);
-                return;
-            }
-            const q = queues.get(queueID);
-            q.remove(interaction.user.id);
+            const game = interaction.options.get('game').value;
+            const queue = queues[game];
+            queue.remove(interaction.user.id);
 
-            let retStr = `${interaction.user} has left the queue.\n`
-            retStr += await printQueue(q, interaction.client.users);
-            await interaction.followUp(retStr);
+            await interaction.followUp(
+                `${interaction.user} left the ${game} queue\n` +
+                await printQueue(queue, interaction.client.users)
+            );
         }
         else if (interaction.commandName === 'mmr') {
             const userID = await interaction.user.id;
@@ -108,9 +85,10 @@ client.on('interactionCreate', async (interaction) => {
         }
         else if (interaction.commandName === 'queues'){
             let retStr = `Queues:\n\n`;
-            for(const queue of queues.values()) {
+            for (const [game, queue] of Object.entries(queues)) {
                 retStr += await printQueue(queue, interaction.client.users);
             }
+
             await interaction.followUp(retStr);
         }
         else if (interaction.commandName === 'register') {
@@ -127,7 +105,7 @@ client.on('interactionCreate', async (interaction) => {
             }
 
             const result = interaction.options.get('result').value;
-            const newPlayersMMR = await reportResult(match, result, interaction.user.id);
+            const newPlayersMMR = await reportMatchResult(interaction.user.id, result);
             await interaction.followUp(`Reported result: ${result}\nUpdate MMRS:\n${await playersToString(newPlayersMMR, interaction.client.users)}`);
         }
         else if (interaction.commandName === 'start') {
@@ -151,7 +129,7 @@ client.on('interactionCreate', async (interaction) => {
                 await interaction.followUp(`Error replying to interaction: ${err.stack}`);
             }
             catch (e) {
-                await interaction.followUp(`Supid dumb error replying to interaction: ${e}`);
+                await interaction.followUp(`Stupid dumb error replying to interaction: ${e}`);
             }
         }
     }
@@ -176,23 +154,33 @@ async function createUser(user) {
 }
 
 
-async function generateTeams(user) {
-    const match = new ValMatch(nextMatchID, user);
-    matches.set(nextMatchID, match);
-    matchesByOwner.set(user, match);
-    nextMatchID++;
-    const q = queuesByOwner.get(user);
-    if (q.getSize() < 2) {
-        return { attacking: [], defending: [] }
+async function generateMatch(game, ownerId) {
+    if (matchesByOwner.has(ownerId)) {
+        throw new Error('You already have an active match');
     }
-    const queueArr = q.getQueue();
-    const players = await getPlayersValMMR(queueArr);
-    // sort players according to mmr
-    const sortedPlayers = new Map([...players.entries()].sort((a, b) => a[1] - b[1]));
-    const { attacking, defending } = match.generateTeams(sortedPlayers);
-    q.clear();
-    return { attacking, defending };
+
+    const queue = queues[game];
+    if (queue.getSize() < 2) {
+        return null;
+    }
+
+    const match =
+        game === 'VAL'
+            ? new ValMatch(nextMatchID++, ownerId)
+            : new RocketLeagueMatch(nextMatchID++, ownerId);
+
+    const players = await getPlayersMMR(game, queue.getPlayers());
+    const sortedPlayers = new Map(
+        [...players.entries()].sort((a, b) => a[1] - b[1])
+    );
+
+    match.generateTeams(sortedPlayers);
+    queue.clear();
+
+    matchesByOwner.set(ownerId, match);
+    return match;
 }
+
 
 
 async function addUserToQueue(queue, user) {
@@ -205,15 +193,29 @@ async function addUserToQueue(queue, user) {
     }
 }
 
-async function reportResult(match, result, reportingUser) {
-    const playerIDs = match.getTeam('attacking').concat(match.getTeam('defending'));
-    const playersWithMMR = await getPlayersValMMR(playerIDs);
-    const playersWithTotalGames = await getPlayersValTotalGames(playerIDs);
-    const newPlayersWithMMR = match.reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser);
-    console.log(newPlayersWithMMR);
-    await updatePlayersValMMRSAndValTotalGames(newPlayersWithMMR);
-    return newPlayersWithMMR;
+async function reportMatchResult(ownerId, result) {
+    const match = matchesByOwner.get(ownerId);
+    if (!match) {
+        throw new Error('You do not own an active match');
+    }
+
+    const playerIDs = match.getAllPlayers();
+    const playersWithMMR = await getPlayersMMR(match.game, playerIDs);
+    const playersWithTotalGames = await getPlayersTotalGames(match.game, playerIDs);
+
+    const newMMRs = match.reportResult(
+        result,
+        playersWithMMR,
+        playersWithTotalGames,
+        ownerId
+    );
+
+    await updatePlayersMMR(match.game, newMMRs);
+
+    matchesByOwner.delete(ownerId); // match complete
+    return newMMRs;
 }
+
 
 /**
  * Converts a map of key user id in String form and value int MMR to a String.
@@ -243,7 +245,7 @@ function determineResponse(successfulResponse, failureResponse, res) {
 }
 
 async function printQueue(queue, users) {
-    let retStr = `Queue ${queue.id}:\n`;
+    let retStr = `Queue ${queue.game}:\n`;
     const players = queue.players;
     for (const userID of players) {
         const user = await users.fetch(userID);
