@@ -18,35 +18,36 @@ model Player {
 
   createdAt DateTime @default(now())
 
-  games     ValGamePlayer[]
+  games     GamePlayer[]
 }
 
-model ValGame {
+model Game {
   id        Int      @id @default(autoincrement())
-  winner    ValTeam  @default(U)
+  type      GameType
+  winner    String?      // team key, e.g. "ATTACKING", "DEFENDING", "BLUE", "ORANGE"
   createdAt DateTime @default(now())
 
-  players   ValGamePlayer[]
+  players   GamePlayer[]
 }
 
-model ValGamePlayer {
+
+model GamePlayer {
   id        Int @id @default(autoincrement())
 
   gameId    Int
   playerId  Int
 
-  team      ValTeam
+  team      String     // team key, interpreted by game type
 
-  game      ValGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  player    Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  game      Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player    Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, playerId])
   @@index([playerId])
   @@index([gameId])
 }
 
-enum ValTeam {
-  A
-  D
-  U
+enum GameType {
+  VAL
+  RL
 }

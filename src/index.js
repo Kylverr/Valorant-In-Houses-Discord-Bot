@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import discord from 'discord.js'
-import { addPlayer, getPlayer, getPlayersValMMR, getPlayersValTotalGames, updatePlayersValMMRSAndValTotalGames } from './database.js'
+import { addPlayer, getPlayer, getPlayersMMR, getPlayersTotalGames } from './database.js'
 import Queue from './models/queue.js'
 import ValMatch from './models/val-match.js'
 dotenv.config();

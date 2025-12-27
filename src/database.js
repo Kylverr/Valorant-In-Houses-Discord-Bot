@@ -2,120 +2,151 @@ import mysql from 'mysql2';
 import dotenv from 'dotenv';
 dotenv.config();
 
-
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME
-}).promise()
+}).promise();
 
 /**
- * Helper function that runs a sample query using the given connection. If the query runs, the connection 
- * to the database was successful.
+ * Game-specific column mappings
+ * This is the ONLY place where VAL / RL differ at the DB level
  */
-async function checkConnection() {
-    try {
-        const [rows] = await pool.query(`SELECT disc_tag FROM Player;`);
-        console.log(`Connection succeeded. Number of current players: ${rows.length}\nPlayers: ${rows}`);
+const GAME_COLUMNS = {
+    VAL: {
+        mmr: 'val_mmr',
+        totalGames: 'total_val_games'
+    },
+    RL: {
+        mmr: 'rl_mmr',
+        totalGames: 'total_rl_games'
     }
-    catch (err) {
-        console.log(`Connection failed`);
-    }
+};
 
+/* ------------------------------------------------------------------ */
+/* Connection check                                                     */
+/* ------------------------------------------------------------------ */
+
+export async function checkConnection() {
+    const [rows] = await pool.query(`SELECT disc_tag FROM Player;`);
+    console.log(`Connected. Players: ${rows.length}`);
 }
 
-async function registerUsers(users, val_mmrs, rl_mmrs) {
-    for (let i = 0; i < users.length; i++) {
-        const [rows] = await pool.query(`INSERT INTO Player(disc_tag, val_mmr, total_val_games, rl_mmr, total_rl_games) VALUES(?, ?, ?, ?, ?);`, [users[i], val_mmrs[i], 0, rl_mmrs[i], 0]);
-        console.log(`registered: ${users[i]}, ${val_mmrs[i]}, ${rl_mmrs[i]}`);
-    }
-}
-
-async function removeAllRegistrations() {
-    const [rows] = await pool.query(`DELETE FROM Player;`);
-}
-
-
-await checkConnection();
-
-
-await removeAllRegistrations();
-
-
-await registerUsers(
-    ["412309566735384577", "877323881076101141", "505514753112670219", "670680767894126633"],
-    [950, 500, 500, 1],
-    [950, 500, 500, 1]
-);
-
-
+/* ------------------------------------------------------------------ */
+/* Player helpers                                                       */
+/* ------------------------------------------------------------------ */
 
 export async function addPlayer(user, val_mmr, val_games, rl_mmr, rl_games) {
-    const [rows] = await pool.query(`INSERT INTO Player(disc_tag, val_mmr, total_val_games, rl_mmr, total_rl_games) VALUES(?, ?, ?, ?, ?);`, [user, val_mmr, val_games, rl_mmr, rl_games]);
-    console.log(`Added ${user}`);
-    return rows;
+    await pool.query(
+        `INSERT INTO Player(disc_tag, val_mmr, total_val_games, rl_mmr, total_rl_games)
+         VALUES (?, ?, ?, ?, ?);`,
+        [user, val_mmr, val_games, rl_mmr, rl_games]
+    );
 }
 
-export async function getPlayer(player) {
-    const [rows] = await pool.query(`SELECT * FROM Player WHERE disc_tag = ? ;`, [player]);
-    return rows;
+export async function getPlayer(discTag) {
+    const [rows] = await pool.query(
+        `SELECT * FROM Player WHERE disc_tag = ?;`,
+        [discTag]
+    );
+    return rows[0] ?? null;
 }
 
-export async function getPlayersValMMR(players) {
-    let m = new Map();
-    const mmrPromises = players.map(async (player) => {
-        const playerMMR = await getPlayerValMMR(player);
-        m.set(player, playerMMR);
-        console.log(player)
+/* ------------------------------------------------------------------ */
+/* MMR queries (generic)                                                */
+/* ------------------------------------------------------------------ */
+
+export async function getPlayersMMR(game, players) {
+    const { mmr } = GAME_COLUMNS[game];
+    const result = new Map();
+
+    const queries = players.map(async (playerId) => {
+        const [rows] = await pool.query(
+            `SELECT ${mmr} FROM Player WHERE disc_tag = ?;`,
+            [playerId]
+        );
+        if (rows.length === 0) return;
+        result.set(playerId, rows[0][mmr]);
     });
-    await Promise.all(mmrPromises);
-    console.log(`Retrieving MMR of players`);
-    return m;
+
+    await Promise.all(queries);
+    return result;
 }
 
-async function getPlayerValMMR(player) {
-    const playerInfo = await getPlayer(player);
+export async function getPlayersTotalGames(game, players) {
+    const { totalGames } = GAME_COLUMNS[game];
+    const result = new Map();
 
-    if (!playerInfo || playerInfo.length === 0) {
-        console.error(`No player found for ID: ${player}`);
-        return null;
+    const queries = players.map(async (playerId) => {
+        const [rows] = await pool.query(
+            `SELECT ${totalGames} FROM Player WHERE disc_tag = ?;`,
+            [playerId]
+        );
+        if (rows.length === 0) return;
+        result.set(playerId, rows[0][totalGames]);
+    });
+
+    await Promise.all(queries);
+    return result;
+}
+
+/* ------------------------------------------------------------------ */
+/* MMR updates                                                          */
+/* ------------------------------------------------------------------ */
+
+export async function updatePlayersMMR(game, playersWithMMR) {
+    const { mmr, totalGames } = GAME_COLUMNS[game];
+
+    const updates = Array.from(playersWithMMR.entries()).map(
+        async ([playerId, newMMR]) => {
+            await pool.query(
+                `UPDATE Player
+                 SET ${mmr} = ?, ${totalGames} = ${totalGames} + 1
+                 WHERE disc_tag = ?;`,
+                [newMMR, playerId]
+            );
+        }
+    );
+
+    await Promise.all(updates);
+}
+
+/* ------------------------------------------------------------------ */
+/* Game + GamePlayer persistence                                        */
+/* ------------------------------------------------------------------ */
+
+export async function createGame(gameType) {
+    const [result] = await pool.query(
+        `INSERT INTO Game(type) VALUES (?);`,
+        [gameType]
+    );
+    return result.insertId;
+}
+
+export async function addGamePlayers(gameId, playersByTeam) {
+    const inserts = [];
+
+    for (const [team, players] of Object.entries(playersByTeam)) {
+        for (const playerId of players) {
+            inserts.push(
+                pool.query(
+                    `INSERT INTO GamePlayer(gameId, playerId, team)
+                     SELECT ?, id, ?
+                     FROM Player
+                     WHERE disc_tag = ?;`,
+                    [gameId, team, playerId]
+                )
+            );
+        }
     }
 
-    return playerInfo[0].val_mmr;
-}
-export async function getPlayersValTotalGames(players) {
-    let m = new Map();
-    const totalGamePromises = players.map(async (player) => {
-        const playerTotalGames = await getPlayerValTotalGames(player);
-        m.set(player, playerTotalGames);
-        console.log(player)
-    });
-    await Promise.all(totalGamePromises);
-    console.log(`Retrieving Total Games of players`);
-    return m;
+    await Promise.all(inserts);
 }
 
-async function getPlayerValTotalGames(player) {
-    const playerInfo = await getPlayer(player);
-
-    if (!playerInfo || playerInfo.length === 0) {
-        console.error(`No player found for ID: ${player}`);
-        return null;
-    }
-
-    return playerInfo[0].total_val_games;
-}
-
-export async function updatePlayersValMMRSAndValTotalGames(playersWithMMR) {
-    console.log(`Updating players`);
-    const mmrPromises = Array.from(playersWithMMR).map(async ([id, mmr]) => {
-        await updatePlayerValMMR(id, mmr);
-    });
-    await Promise.all(mmrPromises);
-}
-
-async function updatePlayerValMMR(id, mmr) {
-    const [rows] = await pool.query(`UPDATE Player SET val_mmr = ?, total_val_games = total_val_games + 1 WHERE disc_tag = ?;`, [mmr, id]);
-    return rows[0];
+export async function setGameWinner(gameId, winningTeam) {
+    await pool.query(
+        `UPDATE Game SET winner = ? WHERE id = ?;`,
+        [winningTeam, gameId]
+    );
 }
