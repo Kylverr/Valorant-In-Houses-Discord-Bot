@@ -12,6 +12,26 @@ const commands = [
     {
         name: 'generate',
         description: 'Generate teams for a match.',
+        options:
+            [
+                {
+                    name: 'game',
+                    description: 'The game you are generating teams for. Choose \"RL\" for \"Rocket League\", or \"VAL\" for \"Valorant\".',
+                    type: ApplicationCommandOptionType.String,
+                    choices:
+                        [
+                            {
+                                name: 'RL',
+                                value: 'RL',
+                            },
+                            {
+                                name: 'VAL',
+                                value: 'VAL',
+                            }
+                        ],
+                    required: true
+                }
+            ]
     },
     {
         name: 'join',

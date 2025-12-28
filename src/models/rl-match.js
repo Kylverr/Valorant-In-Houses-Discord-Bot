@@ -2,38 +2,38 @@ import Match from './match.js';
 
 class RocketLeagueMatch extends Match {
     constructor(matchID, gameLeader) {
-        super(matchID, gameLeader, ['blue', 'orange']);
+        super(matchID, gameLeader, ['Blue', 'Orange']);
     }
 
     reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser) {
         if (
-            (result === 'W' && this.getTeam('blue').includes(reportingUser)) ||
-            (result === 'L' && this.getTeam('orange').includes(reportingUser))
+            (result === 'W' && this.getTeam('Blue').includes(reportingUser)) ||
+            (result === 'L' && this.getTeam('Orange').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,
                 playersWithMMR,
                 playersWithTotalGames,
                 reportingUser,
-                'blue',
-                'orange'
+                'Blue',
+                'Orange'
             );
         }
 
         if (
-            (result === 'L' && this.getTeam('blue').includes(reportingUser)) ||
-            (result === 'W' && this.getTeam('orange').includes(reportingUser))
+            (result === 'L' && this.getTeam('Blue').includes(reportingUser)) ||
+            (result === 'W' && this.getTeam('Orange').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,
                 playersWithMMR,
                 playersWithTotalGames,
                 reportingUser,
-                'orange',
-                'blue'
+                'Orange',
+                'Blue'
             );
         }
     }
 }
 
-export default ValorantMatch;
+export default RocketLeagueMatch;

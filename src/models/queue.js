@@ -48,6 +48,10 @@ class Queue {
         return this.players.length;
     }
 
+    getPlayers() {
+        return [... this.players];
+    }
+
     getQueue() {
         return [... this.players];
     }

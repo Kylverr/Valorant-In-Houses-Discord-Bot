@@ -2,35 +2,35 @@ import Match from './match.js';
 
 class ValorantMatch extends Match {
     constructor(matchID, gameLeader) {
-        super(matchID, gameLeader, ['attacking', 'defending']);
+        super(matchID, gameLeader, ['Attacking', 'Defending']);
     }
 
     reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser) {
         if (
-            (result === 'W' && this.getTeam('attacking').includes(reportingUser)) ||
-            (result === 'L' && this.getTeam('defending').includes(reportingUser))
+            (result === 'W' && this.getTeam('Attacking').includes(reportingUser)) ||
+            (result === 'L' && this.getTeam('Defending').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,
                 playersWithMMR,
                 playersWithTotalGames,
                 reportingUser,
-                'attacking',
-                'defending'
+                'Attacking',
+                'Defending'
             );
         }
 
         if (
-            (result === 'L' && this.getTeam('attacking').includes(reportingUser)) ||
-            (result === 'W' && this.getTeam('defending').includes(reportingUser))
+            (result === 'L' && this.getTeam('Attacking').includes(reportingUser)) ||
+            (result === 'W' && this.getTeam('Defending').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,
                 playersWithMMR,
                 playersWithTotalGames,
                 reportingUser,
-                'defending',
-                'attacking'
+                'Defending',
+                'Attacking'
             );
         }
     }

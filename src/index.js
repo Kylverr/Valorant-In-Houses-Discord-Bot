@@ -2,7 +2,8 @@ import dotenv from 'dotenv'
 import discord from 'discord.js'
 import { addPlayer, getPlayer, getPlayersMMR, getPlayersTotalGames } from './database.js'
 import Queue from './models/queue.js'
-import ValMatch from './models/val-match.js'
+import ValorantMatch from './models/val-match.js'
+import RocketLeagueMatch from './models/rl-match.js'
 dotenv.config();
 const { Client, IntentsBitField, GuildMember } = discord;
 
@@ -19,6 +20,13 @@ const matchesByOwner = new Map(); // ownerId -> Match
 
 const client = new Client({ intents: [IntentsBitField.Flags.Guilds, IntentsBitField.Flags.GuildMembers, IntentsBitField.Flags.GuildMessages, IntentsBitField.Flags.MessageContent] });
 
+client.once('ready', () => {
+    console.log('Bot is online!');
+    queues['RL'].add(process.env.KY_DISC_ID);
+    queues['RL'].add(process.env.MIKKA_DISC_ID);
+    queues['RL'].add(process.env.WARP_DISC_ID);
+    queues['RL'].add(process.env.GREGGO_DISC_ID);
+});
 
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
@@ -37,18 +45,30 @@ client.on('interactionCreate', async (interaction) => {
                 return;
             }
 
-            if (game === 'VAL') {
-                const attackingUsers = await Promise.all(match.getTeam('attacking').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-                const defendingUsers = await Promise.all(match.getTeam('defending').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+            // if (game === 'VAL') {
+            //     const attackingUsers = await Promise.all(match.getTeam('attacking').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+            //     const defendingUsers = await Promise.all(match.getTeam('defending').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
 
-                await interaction.followUp(`Attackers: ${attackingUsers.join(", ")}\nDefenders: ${defendingUsers.join(", ")}`);
-            }
-            else if (game === 'RL') {
-                const blueUsers = await Promise.all(match.getTeam('blue').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-                const orangeUsers = await Promise.all(match.getTeam('orange').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+            //     await interaction.followUp(`Attackers: ${attackingUsers.join(", ")}\nDefenders: ${defendingUsers.join(", ")}`);
+            // }
+            // else if (game === 'RL') {
+            //     const blueUsers = await Promise.all(match.getTeam('blue').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
+            //     const orangeUsers = await Promise.all(match.getTeam('orange').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
 
-                await interaction.followUp(`Blue Team: ${blueUsers.join(", ")}\nOrange Team: ${orangeUsers.join(", ")}`);
+            //     await interaction.followUp(`Blue Team: ${blueUsers.join(", ")}\nOrange Team: ${orangeUsers.join(", ")}`);
+            // }
+            let response = `Match ${match.matchID} Teams:\n`;
+            for (const team of match.teamNames) {
+                const users = await Promise.all(
+                    match.getTeamPlayers(team).map(id =>
+                    interaction.client.users.fetch(id).then(u => u.toString())
+                    )
+                );
+
+                response += `${team}: ${users.join(", ")}\n`;
             }
+            await interaction.followUp(response);
+
 
         }
         else if (interaction.commandName === 'join') {
@@ -166,7 +186,7 @@ async function generateMatch(game, ownerId) {
 
     const match =
         game === 'VAL'
-            ? new ValMatch(nextMatchID++, ownerId)
+            ? new ValorantMatch(nextMatchID++, ownerId)
             : new RocketLeagueMatch(nextMatchID++, ownerId);
 
     const players = await getPlayersMMR(game, queue.getPlayers());
@@ -185,7 +205,8 @@ async function generateMatch(game, ownerId) {
 
 async function addUserToQueue(queue, user) {
     const res = await getPlayer(user);
-    if (res.length === 0) {
+    console.log(res);
+    if (!res) {
         return -1;
     }
     else {
@@ -246,7 +267,7 @@ function determineResponse(successfulResponse, failureResponse, res) {
 
 async function printQueue(queue, users) {
     let retStr = `Queue ${queue.game}:\n`;
-    const players = queue.players;
+    const players = queue.getPlayers();
     for (const userID of players) {
         const user = await users.fetch(userID);
         retStr += (`${user.toString()}\n`);

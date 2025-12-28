@@ -17,7 +17,7 @@ class Match {
 
     // ===== Generic helpers =====
 
-    getTeam(name) {
+    getTeamPlayers(name) {
         return this.teams.get(name);
     }
 
