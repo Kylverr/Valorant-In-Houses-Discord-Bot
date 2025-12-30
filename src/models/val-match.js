@@ -7,8 +7,8 @@ class ValorantMatch extends Match {
 
     reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser) {
         if (
-            (result === 'W' && this.getTeam('Attacking').includes(reportingUser)) ||
-            (result === 'L' && this.getTeam('Defending').includes(reportingUser))
+            (result === 'W' && this.getTeamPlayers('Attacking').includes(reportingUser)) ||
+            (result === 'L' && this.getTeamPlayers('Defending').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,
@@ -21,8 +21,8 @@ class ValorantMatch extends Match {
         }
 
         if (
-            (result === 'L' && this.getTeam('Attacking').includes(reportingUser)) ||
-            (result === 'W' && this.getTeam('Defending').includes(reportingUser))
+            (result === 'L' && this.getTeamPlayers('Attacking').includes(reportingUser)) ||
+            (result === 'W' && this.getTeamPlayers('Defending').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,

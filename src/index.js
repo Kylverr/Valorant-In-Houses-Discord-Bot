@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
 import discord from 'discord.js'
-import { addPlayer, getPlayer, getPlayersMMR, getPlayersTotalGames } from './database.js'
+import { addPlayer, getPlayer, getPlayersMMR, getPlayersTotalGames, updatePlayersMMR, createGame } from './database.js'
 import Queue from './models/queue.js'
 import ValorantMatch from './models/val-match.js'
 import RocketLeagueMatch from './models/rl-match.js'
@@ -113,7 +113,7 @@ client.on('interactionCreate', async (interaction) => {
             }
             const shuffledMatch = await shuffleTeams(match);
             matchesByOwner.set(interaction.user.id, shuffledMatch);
-                        
+
             await interaction.followUp(`Shuffled teams for match ${shuffledMatch.matchID}:\n${await printMatch(shuffledMatch, interaction.client.users)}`);
 
         }
@@ -263,10 +263,13 @@ async function reportMatchResult(ownerId, result) {
         result,
         playersWithMMR,
         playersWithTotalGames,
-        ownerId
+        ownerId,
+
     );
 
     await updatePlayersMMR(match.game, newMMRs);
+
+    await createGame(match.game, match.winner, match.getPlayersByTeam());
 
     matchesByOwner.delete(ownerId); // match complete
     return newMMRs;

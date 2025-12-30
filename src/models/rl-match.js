@@ -7,8 +7,8 @@ class RocketLeagueMatch extends Match {
 
     reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser) {
         if (
-            (result === 'W' && this.getTeam('Blue').includes(reportingUser)) ||
-            (result === 'L' && this.getTeam('Orange').includes(reportingUser))
+            (result === 'W' && this.getTeamPlayers('Blue').includes(reportingUser)) ||
+            (result === 'L' && this.getTeamPlayers('Orange').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,
@@ -21,8 +21,8 @@ class RocketLeagueMatch extends Match {
         }
 
         if (
-            (result === 'L' && this.getTeam('Blue').includes(reportingUser)) ||
-            (result === 'W' && this.getTeam('Orange').includes(reportingUser))
+            (result === 'L' && this.getTeamPlayers('Blue').includes(reportingUser)) ||
+            (result === 'W' && this.getTeamPlayers('Orange').includes(reportingUser))
         ) {
             return super.reportResult(
                 result,

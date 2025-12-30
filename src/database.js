@@ -122,11 +122,13 @@ export async function updatePlayersMMR(game, playersWithMMR) {
 /* Game + GamePlayer persistence                                        */
 /* ------------------------------------------------------------------ */
 
-export async function createGame(gameType) {
+export async function createGame(gameType, winner, playersByTeam) {
     const [result] = await pool.query(
-        `INSERT INTO Game(type) VALUES (?);`,
-        [gameType]
+        `INSERT INTO Game(type, winner) VALUES (?, ?);`,
+        [gameType, winner]
     );
+    // add game players separately
+    await addGamePlayers(result.insertId, playersByTeam);
     return result.insertId;
 }
 

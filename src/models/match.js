@@ -14,12 +14,23 @@ class Match {
         }
 
         this.inProgress = true;
+
+        this.winner = null;
+        this.loser = null;
     }
 
     // ===== Generic helpers =====
 
     getTeamPlayers(name) {
         return this.teams.get(name);
+    }
+
+    getPlayersByTeam() {
+        const result = {};
+        for (const [teamName, players] of this.teams.entries()) {
+            result[teamName] = players;
+        }
+        return result;
     }
 
     getAllPlayers() {
@@ -139,18 +150,30 @@ class Match {
 
     }
 
-    reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser, winTeam, loseTeam) {
+    reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser) {
         if (!this.inProgress) return;
 
-        const winners = this.teams.get(winTeam);
-        const losers = this.teams.get(loseTeam);
+        const teamA = this.teamNames[0];
+        const teamB = this.teamNames[1];
 
-        if (winners.includes(reportingUser)) {
-            return this.calculateNewMMRS(winners, losers, playersWithMMR, playersWithTotalGames);
+        let winners, losers;
+        if (result === 'W' && this.teams.get(teamA).includes(reportingUser) ||
+            result === 'L' && this.teams.get(teamB).includes(reportingUser)) {
+            winners = this.teams.get(teamA);
+            losers = this.teams.get(teamB);
+
+            this.winner = teamA;
+            this.loser = teamB;
         }
-        if (losers.includes(reportingUser)) {
-            return this.calculateNewMMRS(losers, winners, playersWithMMR, playersWithTotalGames);
+        else {
+            winners = this.teams.get(teamB);
+            losers = this.teams.get(teamA);
+
+            this.winner = teamB;
+            this.loser = teamA;
         }
+
+        return this.calculateNewMMRS(winners, losers, playersWithMMR, playersWithTotalGames);
     }
 }
 
