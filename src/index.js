@@ -45,31 +45,7 @@ client.on('interactionCreate', async (interaction) => {
                 return;
             }
 
-            // if (game === 'VAL') {
-            //     const attackingUsers = await Promise.all(match.getTeam('attacking').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-            //     const defendingUsers = await Promise.all(match.getTeam('defending').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-
-            //     await interaction.followUp(`Attackers: ${attackingUsers.join(", ")}\nDefenders: ${defendingUsers.join(", ")}`);
-            // }
-            // else if (game === 'RL') {
-            //     const blueUsers = await Promise.all(match.getTeam('blue').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-            //     const orangeUsers = await Promise.all(match.getTeam('orange').map((id) => interaction.client.users.fetch(id.toString()).then((user) => user.toString())));
-
-            //     await interaction.followUp(`Blue Team: ${blueUsers.join(", ")}\nOrange Team: ${orangeUsers.join(", ")}`);
-            // }
-            let response = `Match ${match.matchID} Teams:\n`;
-            for (const team of match.teamNames) {
-                const users = await Promise.all(
-                    match.getTeamPlayers(team).map(id =>
-                    interaction.client.users.fetch(id).then(u => u.toString())
-                    )
-                );
-
-                response += `${team}: ${users.join(", ")}\n`;
-            }
-            await interaction.followUp(response);
-
-
+            await interaction.followUp(await printMatch(match, interaction.client.users));
         }
         else if (interaction.commandName === 'join') {
             const game = interaction.options.get('game').value;
@@ -128,14 +104,18 @@ client.on('interactionCreate', async (interaction) => {
             const newPlayersMMR = await reportMatchResult(interaction.user.id, result);
             await interaction.followUp(`Reported result: ${result}\nUpdate MMRS:\n${await playersToString(newPlayersMMR, interaction.client.users)}`);
         }
-        else if (interaction.commandName === 'start') {
-            if(queuesByOwner.has(interaction.user.id)) {
+        else if (interaction.commandName === 'shuffle') {
+            const match = matchesByOwner.get(interaction.user.id);
+            if(!match) {
                 const user = await interaction.client.users.fetch(interaction.user.id).then((user) => user.toString());
-                await interaction.followUp(`${user} has already started a queue.`); 
+                await interaction.followUp(`${user} does not have an active match to shuffle teams for.`);
                 return;
             }
-            const game = interaction.options.get('game').value;
-            await interaction.followUp(`Created a queue for a ${game} game.`);
+            const shuffledMatch = await shuffleTeams(match);
+            matchesByOwner.set(interaction.user.id, shuffledMatch);
+                        
+            await interaction.followUp(`Shuffled teams for match ${shuffledMatch.matchID}:\n${await printMatch(shuffledMatch, interaction.client.users)}`);
+
         }
         else if (interaction.commandName === 'steal') {
             const mikkaUser = await interaction.client.users.fetch(process.env.MIKKA_DISC_ID).then((user) => user.toString());
@@ -200,6 +180,61 @@ async function generateMatch(game, ownerId) {
     matchesByOwner.set(ownerId, match);
     return match;
 }
+
+async function shuffleTeams(match) {
+    const players = await getPlayersMMR(match.game, match.getAllPlayers());
+    // players: Map<playerId, mmr>
+
+    let bestPair = null;
+    let minDiff = Infinity;
+
+    const teamPlayers = {};
+    for (const teamName of match.teamNames) {
+        teamPlayers[teamName] = match.getTeamPlayers(teamName);
+    }
+
+    const teamNames = match.teamNames;
+
+    // compare players across teams only
+    for (let i = 0; i < teamNames.length; i++) {
+        for (let j = i + 1; j < teamNames.length; j++) {
+            const teamA = teamNames[i];
+            const teamB = teamNames[j];
+
+            for (const playerA of teamPlayers[teamA]) {
+                for (const playerB of teamPlayers[teamB]) {
+                    const diff = Math.abs(
+                        players.get(playerA) - players.get(playerB)
+                    );
+
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        bestPair = {
+                            playerA,
+                            playerB,
+                            teamA,
+                            teamB
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    if (!bestPair) return match;
+
+    const { playerA, playerB, teamA, teamB } = bestPair;
+
+    // perform the swap
+    const teamAPlayers = match.getTeamPlayers(teamA);
+    const teamBPlayers = match.getTeamPlayers(teamB);
+
+    teamAPlayers[teamAPlayers.indexOf(playerA)] = playerB;
+    teamBPlayers[teamBPlayers.indexOf(playerB)] = playerA;
+
+    return match;
+}
+
 
 
 
@@ -271,6 +306,20 @@ async function printQueue(queue, users) {
     for (const userID of players) {
         const user = await users.fetch(userID);
         retStr += (`${user.toString()}\n`);
+    }
+    return retStr;
+}
+
+async function printMatch(match, users) {
+    let retStr = `Match ${match.matchID} Teams:\n`;
+    for (const team of match.teamNames) {
+        const teamPlayers = match.getTeamPlayers(team);
+        retStr += `${team}: `;
+        for (const playerID of teamPlayers) {
+            const user = await users.fetch(playerID);
+            retStr += `${user.toString()} `;
+        }
+        retStr += `\n`;
     }
     return retStr;
 }

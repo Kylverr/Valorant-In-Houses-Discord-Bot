@@ -2,7 +2,7 @@ import Match from './match.js';
 
 class RocketLeagueMatch extends Match {
     constructor(matchID, gameLeader) {
-        super(matchID, gameLeader, ['Blue', 'Orange']);
+        super(matchID, 'RL', gameLeader, ['Blue', 'Orange']);
     }
 
     reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser) {

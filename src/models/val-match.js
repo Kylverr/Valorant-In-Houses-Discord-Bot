@@ -2,7 +2,7 @@ import Match from './match.js';
 
 class ValorantMatch extends Match {
     constructor(matchID, gameLeader) {
-        super(matchID, gameLeader, ['Attacking', 'Defending']);
+        super(matchID, 'VAL', gameLeader, ['Attacking', 'Defending']);
     }
 
     reportResult(result, playersWithMMR, playersWithTotalGames, reportingUser) {

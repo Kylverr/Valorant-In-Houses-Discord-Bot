@@ -138,28 +138,8 @@ const commands = [
             ]
     },
     {
-        name: 'start',
-        description: 'Start a queue for a specified game.',
-        options:
-            [
-                {
-                    name: 'game',
-                    description: 'The game you want to start a queue for. Choose \"RL\" for \"Rocket League\", or \"VAL\" for \"Valorant\".',
-                    type: ApplicationCommandOptionType.String,
-                    choices:
-                        [
-                            {
-                                name: 'RL',
-                                value: 'RL',
-                            },
-                            {
-                                name: 'VAL',
-                                value: 'VAL',
-                            }
-                        ],
-                    required: true,
-                }
-            ]
+        name: 'shuffle',
+        description: 'Shuffle players in the current match.'
     },
     {
         name: 'steal',

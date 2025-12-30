@@ -1,6 +1,7 @@
 class Match {
-    constructor(matchID, gameLeader, teamNames) {
+    constructor(matchID, game, gameLeader, teamNames) {
         this.matchID = matchID;
+        this.game = game;
         this.gameLeader = gameLeader;
 
         // Example: ['attacking', 'defending'] or ['blue', 'orange']
@@ -19,6 +20,14 @@ class Match {
 
     getTeamPlayers(name) {
         return this.teams.get(name);
+    }
+
+    getAllPlayers() {
+        let allPlayers = [];
+        for (const team of this.teams.values()) {
+            allPlayers = allPlayers.concat(team);
+        }
+        return allPlayers;
     }
 
     clearTeams() {
@@ -74,6 +83,10 @@ class Match {
             [teamA]: this.teams.get(teamA),
             [teamB]: this.teams.get(teamB)
         };
+    }
+
+    shuffleTeams() {
+
     }
 
     calculateNewMMRS(winners, losers, playersWithMMR, playersWithTotalGames) {
